@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+    <groupId>org.trustedanalytics</groupId>
+    <artifactId>ModelArchiver</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <repositories>
+        <repository>
+            <id>atk</id>
+            <url>https://maven.trustedanalytics.org/content/repositories/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+
+        <repository>
+            <id>apache</id>
+            <url>https://repository.apache.org/content/groups/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
+     <modules>
+            <module>scoring-interfaces</module>
+            <module>model-archive-format</module>
+     </modules>
+    <properties>
+        <project.version>master-SNAPSHOT</project.version>
+        <top.dir>${project.basedir}</top.dir>
+
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <dep.cdh.version>cdh5.5.0</dep.cdh.version>
+        <dep.spark.version>1.5.0-${dep.cdh.version}</dep.spark.version>
+        <dep.spark.yarn.version>1.5.0-${dep.cdh.version}</dep.spark.yarn.version>
+
+
+        <dep.typesafe-config.version>1.2.1</dep.typesafe-config.version>
+
+
+        <!--START GAO MAVEN -->
+
+        <scala.long.version>2.10.4</scala.long.version>
+        <scala.short.version>2.10</scala.short.version>
+        <scalatest.version>2.1.6</scalatest.version>
+
+        <akka.version>2.3.11</akka.version>
+
+        <scoverage-plugin.version>1.0.4</scoverage-plugin.version>
+
+
+
+        <commons-lang3.version>3.3.2</commons-lang3.version>
+        <mavenVersion>3.1.1</mavenVersion>
+        <javaVersion>1.8</javaVersion>
+    </properties>
+<build>
+    <pluginManagement>
+    <plugins>
+        <!--START DO NOT TOUCH-->
+        <plugin>
+            <inherited>true</inherited>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <version>3.1.6</version>
+            <executions>
+                <execution>
+                    <id>compile</id>
+                    <goals>
+                        <goal>add-source</goal>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <jvmArgs>
+                            <jvmArg>-Xms256m</jvmArg>
+                            <jvmArg>-Xmx512m</jvmArg>
+                        </jvmArgs>
+                        <args>
+                            <arg>-g:vars</arg>
+                        </args>
+                    </configuration>
+                </execution>
+                <execution>
+                    <id>test</id>
+                    <goals>
+                        <goal>add-source</goal>
+                        <goal>testCompile</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <recompileMode>incremental</recompileMode>
+                <useZincServer>true</useZincServer>
+                <scalaVersion>${scala.long.version}</scalaVersion>
+                <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
+            </configuration>
+        </plugin>
+
+        <plugin>
+            <inherited>true</inherited>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest-maven-plugin</artifactId>
+            <version>1.0</version>
+            <configuration>
+                <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                <junitxml>.</junitxml>
+                <filereports>WDF TestSuite.txt</filereports>
+                <parallel>false</parallel>
+                <stdout>FTD</stdout>
+                <argLine>-Xmx512m -XX:PermSize=256m</argLine>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>scalaTest</id>
+                    <phase>test</phase>
+                    <goals>
+                        <goal>test</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+        <!--END DO NOT TOUCH-->
+    <plugin>
+        <groupId>org.trustedanalytics</groupId>
+        <artifactId>atk-maven-plugin</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <executions>
+            <execution>
+                <id>compile</id>
+                <goals>
+                    <goal>generate-conf</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+    </plugins>
+    </pluginManagement>
+    </build>
+    <dependencyManagement>
+    <dependencies>
+
+        <dependency>
+            <groupId>org.trustedanalytics</groupId>
+            <artifactId>scoring-interfaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.short.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.trustedanalytics.atk</groupId>
+            <artifactId>event</artifactId>
+            <version>0.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.long.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>${scala.long.version}</version>
+        </dependency>
+    </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.short.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -19,11 +19,11 @@ import java.io._
 import java.net.{ URL, URLClassLoader }
 import java.nio.file.{ Files, Path }
 import java.util.zip.{ ZipInputStream, ZipEntry, ZipOutputStream }
-
 import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.trustedanalytics.atk.event.EventLogging
-import org.trustedanalytics.scoring.interfaces.{Model, ModelLoader}
+import org.trustedanalytics.scoring.interfaces.{ModelLoader, Model}
+
 
 /**
  * Read/write for publishing models
@@ -31,7 +31,6 @@ import org.trustedanalytics.scoring.interfaces.{Model, ModelLoader}
 
 object ModelArchiveFormat extends EventLogging {
 
-  val modelDataString = "modelData"
   val modelReaderString = "modelReader"
   val BUFFER_SIZE = 4096
 
@@ -40,20 +39,26 @@ object ModelArchiveFormat extends EventLogging {
    *   
    * @param classLoaderFiles list of jars and other files for ClassLoader
    * @param modelLoaderClass class that implements the ModelLoader trait for instantiating the model during read()
-   * @param modelData the trained model data
+   * @param modelFileList the trained model data
    * @param outputStream location to store published model
    */
-  def write(classLoaderFiles: List[File], modelLoaderClass: String, modelData: Array[Byte], outputStream: FileOutputStream): Unit = {
+  def write(classLoaderFiles: List[File], modelLoaderClass: String, modelFileList: List[File], outputStream: FileOutputStream): Unit = {
     val zipFile = new ZipOutputStream(new BufferedOutputStream(outputStream))
 
     try {
       classLoaderFiles.foreach((file: File) => {
         if (!file.isDirectory && file.exists()) {
+          println("adding a jar")
           addFileToZip(zipFile, file)
         }
       })
 
-      addByteArrayToZip(zipFile, modelDataString + ".txt", modelData.length, modelData)
+      modelFileList.foreach((file: File) => {
+        if (!file.isDirectory && file.exists()) {
+          println("adding a File")
+          addFileToZip(zipFile, file)
+        }
+      })
       addByteArrayToZip(zipFile, modelReaderString + ".txt", modelLoaderClass.length, modelLoaderClass.getBytes("utf-8"))
     }
     catch {
@@ -107,9 +112,6 @@ object ModelArchiveFormat extends EventLogging {
           val s = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).mkString
           modelName = s.replaceAll("\n", "")
         }
-        else if (individualFile.contains(modelDataString)) {
-          byteArray = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).map(_.toByte).toArray
-        }
         entry = zipInputStream.getNextEntry
       }
 
@@ -117,7 +119,7 @@ object ModelArchiveFormat extends EventLogging {
       val modelLoader = classLoader.loadClass(modelName).newInstance()
 
       addToJavaLibraryPath(libraryPaths) //Add temporary directory to java.library.path
-      modelLoader.asInstanceOf[ModelLoader].load(byteArray)
+      modelLoader.asInstanceOf[ModelLoader].load(modelArchiveInput)
     }
     catch {
       case e: Exception =>

@@ -87,7 +87,7 @@
         <javaVersion>1.8</javaVersion>
     </properties>
 <build>
-    <pluginManagement>
+
     <plugins>
         <!--START DO NOT TOUCH-->
         <plugin>
@@ -166,7 +166,7 @@
         </executions>
     </plugin>
     </plugins>
-    </pluginManagement>
+
     </build>
     <dependencyManagement>
     <dependencies>

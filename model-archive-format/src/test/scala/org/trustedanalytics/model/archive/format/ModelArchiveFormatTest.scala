@@ -36,13 +36,15 @@ class ModelArchiveFormatTest extends WordSpec {
       var zipOutput: FileOutputStream = null
       var counter = 0
       val modelReader = "TestModelReaderPlugin"
+      val modelFile = File.createTempFile("Model", ".txt")
+      val modelFileList = modelFile :: Nil
       val model = "This is a test Model"
 
       var testZipFileStream: ZipInputStream = null
       try {
         zipFile = File.createTempFile("TestZip", ".mar")
         zipOutput = new FileOutputStream(zipFile)
-        ModelArchiveFormat.write(fileList, modelReader, model.getBytes(Charset.forName("utf-8")), zipOutput)
+        ModelArchiveFormat.write(fileList, modelReader, modelFileList, zipOutput)
         val tempDirectory = ModelArchiveFormat.getTemporaryDirectory
         testZipFileStream = new ZipInputStream(new FileInputStream(new File(zipFile.getAbsolutePath)))
 
@@ -112,7 +114,7 @@ class TestModelReaderPlugin extends ModelLoader {
 
   private var testModel: TestModel = _
 
-  override def load(bytes: Array[Byte]): Model = {
+  override def load(modelArchiveZip: File): Model = {
     testModel = new TestModel
     testModel.asInstanceOf[Model]
   }

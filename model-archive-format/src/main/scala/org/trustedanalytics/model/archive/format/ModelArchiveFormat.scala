@@ -39,23 +39,15 @@ object ModelArchiveFormat extends EventLogging {
    *   
    * @param classLoaderFiles list of jars and other files for ClassLoader
    * @param modelLoaderClass class that implements the ModelLoader trait for instantiating the model during read()
-   * @param modelFileList the trained model data
    * @param outputStream location to store published model
    */
-  def write(classLoaderFiles: List[File], modelLoaderClass: String, modelFileList: List[File], outputStream: FileOutputStream): Unit = {
+  def write(classLoaderFiles: List[File], modelLoaderClass: String, outputStream: FileOutputStream): Unit = {
     val zipFile = new ZipOutputStream(new BufferedOutputStream(outputStream))
 
     try {
       classLoaderFiles.foreach((file: File) => {
         if (!file.isDirectory && file.exists()) {
           println("adding a jar")
-          addFileToZip(zipFile, file)
-        }
-      })
-
-      modelFileList.foreach((file: File) => {
-        if (!file.isDirectory && file.exists()) {
-          println("adding a File")
           addFileToZip(zipFile, file)
         }
       })

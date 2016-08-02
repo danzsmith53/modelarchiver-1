@@ -31,20 +31,20 @@ class ModelArchiveFormatTest extends WordSpec {
     "create a zip of given files and place into an output stream" in {
       val testZip = File.createTempFile("test", ".jar")
       val testZip2 = File.createTempFile("test2", ".jar")
-      val fileList = testZip :: testZip2 :: Nil
+      val modelFile = File.createTempFile("Model", ".txt")
+      val fileList = testZip :: testZip2 :: modelFile :: Nil
       var zipFile: File = null
       var zipOutput: FileOutputStream = null
       var counter = 0
       val modelReader = "TestModelReaderPlugin"
-      val modelFile = File.createTempFile("Model", ".txt")
-      val modelFileList = modelFile :: Nil
+
       val model = "This is a test Model"
 
       var testZipFileStream: ZipInputStream = null
       try {
         zipFile = File.createTempFile("TestZip", ".mar")
         zipOutput = new FileOutputStream(zipFile)
-        ModelArchiveFormat.write(fileList, modelReader, modelFileList, zipOutput)
+        ModelArchiveFormat.write(fileList, modelReader, zipOutput)
         val tempDirectory = ModelArchiveFormat.getTemporaryDirectory
         testZipFileStream = new ZipInputStream(new FileInputStream(new File(zipFile.getAbsolutePath)))
 

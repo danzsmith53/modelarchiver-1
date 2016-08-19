@@ -17,6 +17,7 @@
 package org.trustedanalytics.model.archive.format
 
 import java.io._
+import java.net.URLClassLoader
 import java.nio.charset.Charset
 import java.util.zip.{ ZipOutputStream, ZipInputStream }
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -31,12 +32,12 @@ class ModelArchiveFormatTest extends WordSpec {
     "create a zip of given files and place into an output stream" in {
       val testZip = File.createTempFile("test", ".jar")
       val testZip2 = File.createTempFile("test2", ".jar")
-      val modelFile = File.createTempFile("Model", ".txt")
+      val modelFile= File.createTempFile("Model", ".txt")
       val fileList = testZip :: testZip2 :: modelFile :: Nil
       var zipFile: File = null
       var zipOutput: FileOutputStream = null
       var counter = 0
-      val modelReader = "TestModelReaderPlugin"
+      val modelReader = "TestModelReader"
 
       val model = "This is a test Model"
 
@@ -87,7 +88,7 @@ class ModelArchiveFormatTest extends WordSpec {
     try {
       ModelArchiveFormat.addFileToZip(testZipArchive, testJarFile)
       ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelData.txt", 128, "This is dummy model data".getBytes("utf-8"))
-      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelReader.txt", 256, "org.trustedanalytics.model.archive.format.TestModelReaderPlugin".getBytes("utf-8"))
+      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelReader.txt", 256, "org.trustedanalytics.model.archive.format.TestModelReader".getBytes("utf-8"))
 
       testZipArchive.finish()
       IOUtils.closeQuietly(testZipArchive)
@@ -110,7 +111,7 @@ class ModelArchiveFormatTest extends WordSpec {
   }
 }
 
-class TestModelReaderPlugin extends ModelLoader {
+class TestModelReader extends ModelLoader {
 
   private var testModel: TestModel = _
 

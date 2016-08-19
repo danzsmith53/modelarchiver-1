@@ -23,7 +23,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.trustedanalytics.atk.event.EventLogging
 import org.trustedanalytics.scoring.interfaces.{ModelLoader, Model}
-
+//import java.lang.reflect._
 
 /**
  * Read/write for publishing models
@@ -41,13 +41,12 @@ object ModelArchiveFormat extends EventLogging {
    * @param modelLoaderClass class that implements the ModelLoader trait for instantiating the model during read()
    * @param outputStream location to store published model
    */
-  def write(classLoaderFiles: List[File], modelLoaderClass: String, outputStream: FileOutputStream): Unit = {
+  def write(classLoaderFiles: List[File], modelLoaderClass: String,  outputStream: FileOutputStream): Unit = {
     val zipFile = new ZipOutputStream(new BufferedOutputStream(outputStream))
 
     try {
       classLoaderFiles.foreach((file: File) => {
         if (!file.isDirectory && file.exists()) {
-          println("adding a jar")
           addFileToZip(zipFile, file)
         }
       })
@@ -74,8 +73,9 @@ object ModelArchiveFormat extends EventLogging {
    * @return the instantiated Model   
    */
   def read(modelArchiveInput: File, parentClassLoader: ClassLoader): Model = {
+    println("entered Read in Model Archiver")
     var zipInputStream: ZipInputStream = null
-    var modelName: String = null
+    var modelReaderName: String = null
     var urls = Array.empty[URL]
     var byteArray: Array[Byte] = null
     var libraryPaths: Set[String] = Set.empty[String]
@@ -102,15 +102,19 @@ object ModelArchiveFormat extends EventLogging {
         }
         else if (individualFile.contains(modelReaderString)) {
           val s = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).mkString
-          modelName = s.replaceAll("\n", "")
+          modelReaderName = s.replaceAll("\n", "")
         }
         entry = zipInputStream.getNextEntry
       }
 
       val classLoader = new URLClassLoader(urls, parentClassLoader)
-      val modelLoader = classLoader.loadClass(modelName).newInstance()
+      val modelLoader = classLoader.loadClass(modelReaderName).newInstance()
+
 
       addToJavaLibraryPath(libraryPaths) //Add temporary directory to java.library.path
+      //val c1 = modelLoader.getClass.getClassLoader
+      //println(s"modelLoader class loader ${c1}")
+      //c1.loadClass("org.trustedanalytics.scoring.interfaces.ModelLoader")
       modelLoader.asInstanceOf[ModelLoader].load(modelArchiveInput)
     }
     catch {
@@ -250,7 +254,7 @@ object ModelArchiveFormat extends EventLogging {
    *
    * @param libraryPaths Library paths to add
    */
-  private def addToJavaLibraryPath(libraryPaths: Set[String]): Unit = {
+   def addToJavaLibraryPath(libraryPaths: Set[String]): Unit = {
     try {
       val usrPathField = classOf[ClassLoader].getDeclaredField("usr_paths")
       usrPathField.setAccessible(true)
@@ -264,5 +268,4 @@ object ModelArchiveFormat extends EventLogging {
         throw e
     }
   }
-
 }

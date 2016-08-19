@@ -17,6 +17,7 @@
 package org.trustedanalytics.scoring.interfaces
 
 import java.io.File
+import java.net.URLClassLoader
 
 import scala.concurrent.Future
 /**
@@ -28,6 +29,6 @@ trait ModelLoader {
    * Called for loading a Model
    *
    */
-  def load(modelArchiveInput: File): Model
+  def load(modelArchiveInput: File ): Model
 
 }

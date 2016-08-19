@@ -77,7 +77,6 @@ object ModelArchiveFormat extends EventLogging {
     var zipInputStream: ZipInputStream = null
     var modelReaderName: String = null
     var urls = Array.empty[URL]
-    var byteArray: Array[Byte] = null
     var libraryPaths: Set[String] = Set.empty[String]
 
     try {
@@ -109,12 +108,7 @@ object ModelArchiveFormat extends EventLogging {
 
       val classLoader = new URLClassLoader(urls, parentClassLoader)
       val modelLoader = classLoader.loadClass(modelReaderName).newInstance()
-
-
       addToJavaLibraryPath(libraryPaths) //Add temporary directory to java.library.path
-      //val c1 = modelLoader.getClass.getClassLoader
-      //println(s"modelLoader class loader ${c1}")
-      //c1.loadClass("org.trustedanalytics.scoring.interfaces.ModelLoader")
       modelLoader.asInstanceOf[ModelLoader].load(modelArchiveInput)
     }
     catch {
@@ -161,7 +155,7 @@ object ModelArchiveFormat extends EventLogging {
     }
     catch {
       case e: Exception =>
-        error(s"reading model failed due to error extracting file: ${filePath}", exception = e)
+        error(s"reading model failed due to error extracting file: $filePath", exception = e)
         throw e
     }
     finally {
@@ -198,9 +192,8 @@ object ModelArchiveFormat extends EventLogging {
       IOUtils.copy(new FileInputStream(file), zipFile)
     }
     catch {
-      case e: Exception => {
+      case e: Exception =>
         error("Failed to add the given file to zip ", exception = e)
-      }
     }
   }
 

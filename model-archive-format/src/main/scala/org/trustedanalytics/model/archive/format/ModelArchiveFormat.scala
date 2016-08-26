@@ -31,7 +31,7 @@ import org.trustedanalytics.scoring.interfaces.{ModelLoader, Model}
 
 object ModelArchiveFormat extends EventLogging {
 
-  val modelReaderString = "modelReader"
+  val modelReaderString = "modelAdapter"
   val BUFFER_SIZE = 4096
 
   /**

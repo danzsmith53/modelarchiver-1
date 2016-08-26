@@ -88,7 +88,7 @@ class ModelArchiveFormatTest extends WordSpec {
     try {
       ModelArchiveFormat.addFileToZip(testZipArchive, testJarFile)
       ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelData.txt", 128, "This is dummy model data".getBytes("utf-8"))
-      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelReader.txt", 256, "org.trustedanalytics.model.archive.format.TestModelReader".getBytes("utf-8"))
+      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelAdapter.txt", 256, "org.trustedanalytics.model.archive.format.TestModelReader".getBytes("utf-8"))
 
       testZipArchive.finish()
       IOUtils.closeQuietly(testZipArchive)

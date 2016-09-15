@@ -16,7 +16,6 @@
 
 package org.trustedanalytics.scoring.interfaces
 
-import scala.concurrent.Future
 /**
  * Base interface for a Model loader.
  */

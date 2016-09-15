@@ -21,8 +21,8 @@ import org.apache.commons.lang3.StringUtils
 /**
  * For providing the model details
  * @param modelType type of model
- * @param modelClass class of the model
- * @param modelReader reader class of the model
+ * @param modelClass class that wraps the model and exposes the score API on the given model
+ * @param modelReader Reader class for the Model. Used to read the model from Model Archive Format
  * @param customMetaData Map for providing any other customized information about the model such as creation date etc.
  */
 case class ModelMetaDataArgs(modelType: String, modelClass: String, modelReader: String, customMetaData: Map[String, String]) {

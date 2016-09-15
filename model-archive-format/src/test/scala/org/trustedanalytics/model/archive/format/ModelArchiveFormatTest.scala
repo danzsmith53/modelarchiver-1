@@ -17,14 +17,11 @@
 package org.trustedanalytics.model.archive.format
 
 import java.io._
-import java.net.URLClassLoader
-import java.nio.charset.Charset
 import java.util.zip.{ ZipOutputStream, ZipInputStream }
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.scalatest.WordSpec
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.scalatest.Assertions._
-import org.trustedanalytics.scoring.interfaces.{Field, ModelMetaDataArgs, Model, ModelLoader}
+import org.trustedanalytics.scoring.interfaces.{Field, ModelMetaDataArgs, Model, ModelReader}
 
 class ModelArchiveFormatTest extends WordSpec {
 
@@ -32,14 +29,13 @@ class ModelArchiveFormatTest extends WordSpec {
     "create a zip of given files and place into an output stream" in {
       val testZip = File.createTempFile("test", ".jar")
       val testZip2 = File.createTempFile("test2", ".jar")
-      val modelFile= File.createTempFile("Model", ".txt")
-      val fileList = testZip :: testZip2 :: modelFile :: Nil
+      val fileList = testZip :: testZip2 :: Nil
       var zipFile: File = null
       var zipOutput: FileOutputStream = null
       var counter = 0
+      var entries = 0
       val modelReader = "TestModelReader"
-
-      val model = "This is a test Model"
+      val modelReaderJson = "{\"modelLoaderClassName\": \"TestModelReader\"}"
 
       var testZipFileStream: ZipInputStream = null
       try {
@@ -50,25 +46,23 @@ class ModelArchiveFormatTest extends WordSpec {
         testZipFileStream = new ZipInputStream(new FileInputStream(new File(zipFile.getAbsolutePath)))
 
         var entry = testZipFileStream.getNextEntry
+        assert(entry != null)
 
         while (entry != null) {
+          entries = entries + 1
           val individualFile = entry.getName
           if (individualFile.contains(".jar")) {
             counter = counter + 1
           }
-          else if (individualFile.contains("modelReader")) {
-            val file = ModelArchiveFormat.extractFile(testZipFileStream, tempDirectory.toString, individualFile)
+          else if (individualFile.contains("descriptor.json")) {
+            val file = ModelArchiveFormat.extractFile(testZipFileStream, tempDirectory.toString, individualFile, None)
             val s = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).mkString
             val modelName = s.replaceAll("\n", "")
-            assert(modelName.equals(modelReader))
-          }
-          else if (individualFile.contains("modelData")) {
-            val file = ModelArchiveFormat.extractFile(testZipFileStream, tempDirectory.toString, individualFile)
-            val byteArray = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).map(_.toByte).toArray
-            assert(byteArray.length == model.getBytes(Charset.forName("utf-8")).length)
+            assert(modelName.equals(modelReaderJson))
           }
           entry = testZipFileStream.getNextEntry
         }
+        assert(entries == 3)
         assert(counter == 2)
       }
       finally {
@@ -82,18 +76,16 @@ class ModelArchiveFormatTest extends WordSpec {
     val testZipFile = File.createTempFile("TestZip", ".mar")
     val testJarFile = File.createTempFile("test", ".jar")
     val testZipArchive = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(testZipFile)))
-    var modelDataFile = File.createTempFile("modelData", ".txt")
-    var modelLoaderFile = File.createTempFile("modelReader", ".txt")
+    val modelLoaderFile = File.createTempFile("descriptor", ".json")
 
     try {
       ModelArchiveFormat.addFileToZip(testZipArchive, testJarFile)
-      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelData.txt", 128, "This is dummy model data".getBytes("utf-8"))
-      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "modelAdapter.txt", 256, "org.trustedanalytics.model.archive.format.TestModelReader".getBytes("utf-8"))
+      ModelArchiveFormat.addByteArrayToZip(testZipArchive, "descriptor.json", 256, "{\"modelLoaderClassName\": \"org.trustedanalytics.model.archive.format.TestModelReader\"}".getBytes("utf-8"))
 
       testZipArchive.finish()
       IOUtils.closeQuietly(testZipArchive)
 
-      val testModel = ModelArchiveFormat.read(testZipFile, this.getClass.getClassLoader)
+      val testModel = ModelArchiveFormat.read(testZipFile, this.getClass.getClassLoader, None)
 
       assert(testModel.isInstanceOf[Model])
       assert(testModel != null)
@@ -104,18 +96,21 @@ class ModelArchiveFormatTest extends WordSpec {
     }
     finally {
       FileUtils.deleteQuietly(modelLoaderFile)
-      FileUtils.deleteQuietly(modelDataFile)
       FileUtils.deleteQuietly(testZipFile)
       FileUtils.deleteQuietly(testJarFile)
     }
   }
 }
 
-class TestModelReader extends ModelLoader {
+class TestModelReader extends ModelReader {
 
   private var testModel: TestModel = _
 
-  override def load(modelArchiveZip: File): Model = {
+  override def read(modelArchiveZip: File): Model = {
+    testModel = new TestModel
+    testModel.asInstanceOf[Model]
+  }
+  override def read(modelArchiveZip: ZipInputStream): Model = {
     testModel = new TestModel
     testModel.asInstanceOf[Model]
   }

@@ -18,17 +18,24 @@ package org.trustedanalytics.scoring.interfaces
 
 import java.io.File
 import java.net.URLClassLoader
+import java.util.zip.ZipInputStream
 
 import scala.concurrent.Future
 /**
- * Base interface for a Model loader.
+ * Base interface for a Model Reader.
  */
-trait ModelLoader {
+trait ModelReader {
 
   /**
-   * Called for loading a Model
+   * Called for loading a Model from a file
    *
    */
-  def load(modelArchiveInput: File ): Model
+  def read(modelZipFileInput: File ): Model
+
+  /**
+   * Called for loading a Model from a ZipInputStream
+   *
+   */
+  def read(modelZipStreamInput: ZipInputStream): Model
 
 }

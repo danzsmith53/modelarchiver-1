@@ -10,7 +10,7 @@
 
     <repositories>
         <repository>
-            <id>atk</id>
+            <id>scoring</id>
             <url>https://maven.trustedanalytics.org/content/repositories/public/</url>
             <snapshots>
                 <enabled>true</enabled>
@@ -59,17 +59,8 @@
     <properties>
         <project.version>master-SNAPSHOT</project.version>
         <top.dir>${project.basedir}</top.dir>
-
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dep.cdh.version>cdh5.5.0</dep.cdh.version>
-        <dep.spark.version>1.5.0-${dep.cdh.version}</dep.spark.version>
-        <dep.spark.yarn.version>1.5.0-${dep.cdh.version}</dep.spark.yarn.version>
-
-
         <dep.typesafe-config.version>1.2.1</dep.typesafe-config.version>
-
-
         <!--START GAO MAVEN -->
 
         <scala.long.version>2.10.4</scala.long.version>
@@ -210,12 +201,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.trustedanalytics.atk</groupId>
-            <artifactId>event</artifactId>
-            <version>0.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

@@ -16,12 +16,16 @@
 
 package org.trustedanalytics.scoring.interfaces
 
+import org.apache.commons.lang3.StringUtils
+
 /**
  * For providing information about Model inputs and outputs
  * @param name name of the observation column
  * @param dataType data type of the observation column
  */
 case class Field(name: String, dataType: String) {
+  require(StringUtils.isNotEmpty(name), "name should not be empty")
+  require(StringUtils.isNotEmpty(dataType), "data type should not be empty")
 
   override def toString: String = {
     s"""{"name": "${name}", "data_type": "${dataType}"}"""

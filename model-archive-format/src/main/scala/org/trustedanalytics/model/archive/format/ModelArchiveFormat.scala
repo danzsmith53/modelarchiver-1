@@ -17,45 +17,44 @@ package org.trustedanalytics.model.archive.format
 
 import java.io._
 import java.net.{ URL, URLClassLoader }
-import java.nio.file.{ Files, Path }
+import java.nio.file.{Paths, Files, Path}
 import java.util.zip.{ ZipInputStream, ZipEntry, ZipOutputStream }
 import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.{ FileUtils, IOUtils }
-import org.trustedanalytics.atk.event.EventLogging
-import org.trustedanalytics.scoring.interfaces.{ModelLoader, Model}
-//import java.lang.reflect._
+import org.slf4j.LoggerFactory
+import org.trustedanalytics.scoring.interfaces.{ModelReader, Model}
+import scala.util.parsing.json._
+
 
 /**
  * Read/write for publishing models
  */
 
-object ModelArchiveFormat extends EventLogging {
+object ModelArchiveFormat {
 
-  val modelReaderString = "modelAdapter"
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  val DESCRIPTOR_FILENAME = "descriptor.json"
   val BUFFER_SIZE = 4096
+  val MODEL_READER_NAME = "modelLoaderClassName"
 
   /**
-   * Write a Model to a our special format that can be read later by a Scoring Engine.
+   * Write model using Model Archive Format.
    *   
-   * @param classLoaderFiles list of jars and other files for ClassLoader
-   * @param modelLoaderClass class that implements the ModelLoader trait for instantiating the model during read()
+   * @param dependencyFiles list of jars and other files for ClassLoader
+   * @param modelReaderClassName class that implements the ModelLoader trait for instantiating the model during read()
    * @param outputStream location to store published model
    */
-  def write(classLoaderFiles: List[File], modelLoaderClass: String,  outputStream: FileOutputStream): Unit = {
+  def write(dependencyFiles: List[File], modelReaderClassName: String,  outputStream: FileOutputStream): Unit = {
     val zipFile = new ZipOutputStream(new BufferedOutputStream(outputStream))
 
     try {
-      classLoaderFiles.foreach((file: File) => {
-        if (!file.isDirectory && file.exists()) {
+      dependencyFiles.foreach((file: File) => {
+        if (file.exists()) {
           addFileToZip(zipFile, file)
         }
       })
-      addByteArrayToZip(zipFile, modelReaderString + ".txt", modelLoaderClass.length, modelLoaderClass.getBytes("utf-8"))
-    }
-    catch {
-      case e: Exception =>
-        error("writing model failed", exception = e)
-        throw e
+      val modelReaderClassNameJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\"}"
+      addByteArrayToZip(zipFile, DESCRIPTOR_FILENAME, modelReaderClassNameJson.length, modelReaderClassNameJson.getBytes("utf-8"))
     }
     finally {
       zipFile.finish()
@@ -64,16 +63,16 @@ object ModelArchiveFormat extends EventLogging {
   }
 
   /**
-   * Read a Model from our special format using a private ClassLoader.
+   * Read model from Model Archive Format.
    *   
    * May throw exception if version of archive doesn't match current library.
    *
    * @param modelArchiveInput location to read published model from
-   * @param parentClassLoader parentClassLoader to use for the private ClassLoader
+   * @param parentClassLoader parentClassLoader to use for the private ClassLoader.
    * @return the instantiated Model   
    */
-  def read(modelArchiveInput: File, parentClassLoader: ClassLoader): Model = {
-    println("entered Read in Model Archiver")
+  def read(modelArchiveInput: File, parentClassLoader: ClassLoader, bufSize: Option[Int]): Model = {
+    logger.info("Entered Read in Model Archive Format")
     var zipInputStream: ZipInputStream = null
     var modelReaderName: String = null
     var urls = Array.empty[URL]
@@ -87,7 +86,7 @@ object ModelArchiveFormat extends EventLogging {
       var entry = zipInputStream.getNextEntry
       while (entry != null) {
         val individualFile = entry.getName
-        val file = extractFile(zipInputStream, tempDirectory.toString, individualFile)
+        val file = extractFile(zipInputStream, tempDirectory.toString, individualFile, bufSize)
 
         if (individualFile.contains(".jar")) {
           val url = file.toURI.toURL
@@ -99,22 +98,24 @@ object ModelArchiveFormat extends EventLogging {
         else if (individualFile.contains(".dll")) {
           libraryPaths += getDirectoryPath(file)
         }
-        else if (individualFile.contains(modelReaderString)) {
-          val s = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).mkString
-          modelReaderName = s.replaceAll("\n", "")
+        else if (individualFile.contains(DESCRIPTOR_FILENAME)) {
+          val jsonString = scala.io.Source.fromFile(Paths.get(tempDirectory.toString, individualFile).toString).mkString
+          val parsed = JSON.parseFull(jsonString)
+          var jsonMap: Map[String, String] = null
+          parsed match {
+            case Some(m) => jsonMap = m.asInstanceOf[Map[String, String]]
+            case None => logger.error("unable to find the model reader class name")
+          }
+          modelReaderName = jsonMap(MODEL_READER_NAME)
         }
+        //ignore the other files. They are used in the Model Reader operation
         entry = zipInputStream.getNextEntry
       }
 
       val classLoader = new URLClassLoader(urls, parentClassLoader)
-      val modelLoader = classLoader.loadClass(modelReaderName).newInstance()
+      val modelReader = classLoader.loadClass(modelReaderName).newInstance()
       addToJavaLibraryPath(libraryPaths) //Add temporary directory to java.library.path
-      modelLoader.asInstanceOf[ModelLoader].load(modelArchiveInput)
-    }
-    catch {
-      case e: Exception =>
-        error("reading model failed", exception = e)
-        throw e
+      modelReader.asInstanceOf[ModelReader].read(modelArchiveInput)
     }
     finally {
       IOUtils.closeQuietly(zipInputStream)
@@ -130,33 +131,27 @@ object ModelArchiveFormat extends EventLogging {
    *
    * @return Temporary file
    */
-  def extractFile(zipIn: ZipInputStream, tempDir: String, filePath: String): File = {
+  def extractFile(zipIn: ZipInputStream, tempDir: String, filePath: String, bufferSize: Option[Int]): File = {
     var file: File = null
     val fileName = filePath.substring(filePath.lastIndexOf("/") + 1)
     var bufferedOutStream: BufferedOutputStream = null
+    var bytesIn: Array[Byte] = null
 
     try {
       file = new File(tempDir, fileName)
       file.createNewFile()
 
       bufferedOutStream = new BufferedOutputStream(new FileOutputStream(file))
-      val bytesIn: Array[Byte] = new Array[Byte](BUFFER_SIZE)
-      var continueReading = true
-      var read = 0
-      while (continueReading) {
-        read = zipIn.read(bytesIn)
-        if (read != -1) {
-          bufferedOutStream.write(bytesIn, 0, read)
-        }
-        else {
-          continueReading = false
-        }
+      bufferSize match {
+        case Some(size) => bytesIn = new Array[Byte](size)
+        case None => bytesIn = new Array[Byte](BUFFER_SIZE)
       }
-    }
-    catch {
-      case e: Exception =>
-        error(s"reading model failed due to error extracting file: $filePath", exception = e)
-        throw e
+
+      var read = zipIn.read(bytesIn)
+      while (read != -1){
+        bufferedOutStream.write(bytesIn, 0, read)
+        read = zipIn.read(bytesIn)
+      }
     }
     finally {
       bufferedOutStream.close()
@@ -167,16 +162,16 @@ object ModelArchiveFormat extends EventLogging {
   /**
    * Add byte array contents to zip file using
    *
-   * @param zipFile Zip File
+   * @param zipStream Zip Stream
    * @param entryName Name of entry to add
    * @param entrySize Size of entry
    * @param entryContent Content to add
    */
-  def addByteArrayToZip(zipFile: ZipOutputStream, entryName: String, entrySize: Int, entryContent: Array[Byte]): Unit = {
+  def addByteArrayToZip(zipStream: ZipOutputStream, entryName: String, entrySize: Int, entryContent: Array[Byte]): Unit = {
     val modelEntry = new ZipEntry(entryName)
     modelEntry.setSize(entrySize)
-    zipFile.putNextEntry(modelEntry)
-    IOUtils.copy(new ByteArrayInputStream(entryContent), zipFile)
+    zipStream.putNextEntry(modelEntry)
+    IOUtils.copy(new ByteArrayInputStream(entryContent), zipStream)
   }
 
   /**
@@ -191,19 +186,15 @@ object ModelArchiveFormat extends EventLogging {
       zipFile.putNextEntry(fileEntry)
       IOUtils.copy(new FileInputStream(file), zipFile)
     }
-    catch {
-      case e: Exception =>
-        error("Failed to add the given file to zip ", exception = e)
-    }
   }
 
   def getTemporaryDirectory: Path = {
     try {
       val config = ConfigFactory.load(this.getClass.getClassLoader)
-      val configKey = "atk.scoring-engine.tmpdir"
+      val configKey = "trustedanalytics.scoring-engine.tmpdir"
 
       val tmpModelDir = if (config.hasPath(configKey)) {
-        val tmpDirStr: String = config.getString("atk.scoring-engine.tmpdir")
+        val tmpDirStr: String = config.getString(configKey)
         val tmpDir = new File(tmpDirStr)
         if (!tmpDir.exists()) {
           tmpDir.mkdir()
@@ -215,15 +206,9 @@ object ModelArchiveFormat extends EventLogging {
         tmpDir.toFile
       }
 
-      info(s"installing model to temporary directory:${tmpModelDir.getAbsolutePath}")
+      logger.info(s"installing model to temporary directory:${tmpModelDir.getAbsolutePath}")
       sys.addShutdownHook(FileUtils.deleteQuietly(tmpModelDir)) // Delete temporary directory on exit
       tmpModelDir.toPath
-    }
-    catch {
-      case e: Exception => {
-        error("Failed to create temporary director for extracting model", exception = e)
-        throw e
-      }
     }
   }
 
@@ -256,8 +241,7 @@ object ModelArchiveFormat extends EventLogging {
     }
     catch {
       case e: Exception =>
-        error(s"reading model failed due to failure to set java.library.path: ${libraryPaths.mkString(",")}",
-          exception = e)
+        error(s"reading model failed due to failure to set java.library.path: ${libraryPaths.mkString(",")}")
         throw e
     }
   }

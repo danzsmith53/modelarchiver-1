@@ -17,11 +17,14 @@
 package org.trustedanalytics.model.archive.format
 
 import java.io._
+import java.net.URLClassLoader
 import java.util.zip.{ ZipOutputStream, ZipInputStream }
 import org.scalatest.WordSpec
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.scalatest.Assertions._
 import org.trustedanalytics.scoring.interfaces.{Field, ModelMetaDataArgs, Model, ModelReader}
+
+import scala.util.parsing.json.JSON
 
 class ModelArchiveFormatTest extends WordSpec {
 
@@ -35,13 +38,17 @@ class ModelArchiveFormatTest extends WordSpec {
       var counter = 0
       var entries = 0
       val modelReader = "TestModelReader"
-      val modelReaderJson = "{\"modelLoaderClassName\": \"TestModelReader\"}"
+      val MODEL_READER_NAME = "modelLoaderClassName"
+      val MODEL_NAME = "modelClassName"
+      val model = "testModel"
+      var jsonMap: Map[String, String] = null
+      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReader + "\", \"" + MODEL_NAME + "\": \"" + model + "\"}"
 
       var testZipFileStream: ZipInputStream = null
       try {
         zipFile = File.createTempFile("TestZip", ".mar")
         zipOutput = new FileOutputStream(zipFile)
-        ModelArchiveFormat.write(fileList, modelReader, zipOutput)
+        ModelArchiveFormat.write(fileList, modelReader, model, zipOutput)
         val tempDirectory = ModelArchiveFormat.getTemporaryDirectory
         testZipFileStream = new ZipInputStream(new FileInputStream(new File(zipFile.getAbsolutePath)))
 
@@ -57,8 +64,17 @@ class ModelArchiveFormatTest extends WordSpec {
           else if (individualFile.contains("descriptor.json")) {
             val file = ModelArchiveFormat.extractFile(testZipFileStream, tempDirectory.toString, individualFile, None)
             val s = scala.io.Source.fromFile(tempDirectory.toString + "/" + individualFile).mkString
-            val modelName = s.replaceAll("\n", "")
-            assert(modelName.equals(modelReaderJson))
+            val parsed = JSON.parseFull(descriptorJson)
+
+            parsed match {
+              case Some(m) => jsonMap = m.asInstanceOf[Map[String, String]]
+              case None => println("unable to find the model reader class name")
+            }
+            val modelReaderName = jsonMap(MODEL_READER_NAME)
+            val modelName = jsonMap(MODEL_NAME)
+
+            assert(modelReaderName.equals(modelReader))
+            assert(modelName.equals(model))
           }
           entry = testZipFileStream.getNextEntry
         }
@@ -106,11 +122,11 @@ class TestModelReader extends ModelReader {
 
   private var testModel: TestModel = _
 
-  override def read(modelArchiveZip: File): Model = {
+  override def read(modelArchiveZip: File, classLoader: URLClassLoader, jsonMap: Map[String, String]): Model = {
     testModel = new TestModel
     testModel.asInstanceOf[Model]
   }
-  override def read(modelArchiveZip: ZipInputStream): Model = {
+  override def read(modelArchiveZip: ZipInputStream, classLoader: URLClassLoader, jsonMap: Map[String, String]): Model = {
     testModel = new TestModel
     testModel.asInstanceOf[Model]
   }

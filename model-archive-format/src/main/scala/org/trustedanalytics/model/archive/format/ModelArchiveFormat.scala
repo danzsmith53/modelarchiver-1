@@ -36,6 +36,7 @@ object ModelArchiveFormat {
   val DESCRIPTOR_FILENAME = "descriptor.json"
   val BUFFER_SIZE = 4096
   val MODEL_READER_NAME = "modelLoaderClassName"
+  val MODEL_NAME = "modelClassName"
 
   /**
    * Write model using Model Archive Format.
@@ -44,7 +45,7 @@ object ModelArchiveFormat {
    * @param modelReaderClassName class that implements the ModelLoader trait for instantiating the model during read()
    * @param outputStream location to store published model
    */
-  def write(dependencyFiles: List[File], modelReaderClassName: String,  outputStream: FileOutputStream): Unit = {
+  def write(dependencyFiles: List[File], modelReaderClassName: String,  modelClassName: String, outputStream: FileOutputStream): Unit = {
     val zipFile = new ZipOutputStream(new BufferedOutputStream(outputStream))
 
     try {
@@ -53,8 +54,8 @@ object ModelArchiveFormat {
           addFileToZip(zipFile, file)
         }
       })
-      val modelReaderClassNameJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\"}"
-      addByteArrayToZip(zipFile, DESCRIPTOR_FILENAME, modelReaderClassNameJson.length, modelReaderClassNameJson.getBytes("utf-8"))
+      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\", \"" + MODEL_NAME + "\": \"" + modelClassName + "\"}"
+      addByteArrayToZip(zipFile, DESCRIPTOR_FILENAME, descriptorJson.length, descriptorJson.getBytes("utf-8"))
     }
     finally {
       zipFile.finish()
@@ -72,11 +73,12 @@ object ModelArchiveFormat {
    * @return the instantiated Model   
    */
   def read(modelArchiveInput: File, parentClassLoader: ClassLoader, bufSize: Option[Int]): Model = {
-    logger.info("Entered Read in Model Archive Format")
+    logger.info("Entered ead function in Model Archive Format")
     var zipInputStream: ZipInputStream = null
     var modelReaderName: String = null
     var urls = Array.empty[URL]
     var libraryPaths: Set[String] = Set.empty[String]
+    var jsonMap: Map[String, String] = null
 
     try {
       // Extract files to temporary directory so that dynamic library names are not changed
@@ -88,7 +90,7 @@ object ModelArchiveFormat {
         val individualFile = entry.getName
         val file = extractFile(zipInputStream, tempDirectory.toString, individualFile, bufSize)
 
-        if (individualFile.contains(".jar")) {
+        if (individualFile.contains(".jar") || individualFile.contains(".class")) {
           val url = file.toURI.toURL
           urls = urls :+ url
         }
@@ -101,21 +103,22 @@ object ModelArchiveFormat {
         else if (individualFile.contains(DESCRIPTOR_FILENAME)) {
           val jsonString = scala.io.Source.fromFile(Paths.get(tempDirectory.toString, individualFile).toString).mkString
           val parsed = JSON.parseFull(jsonString)
-          var jsonMap: Map[String, String] = null
           parsed match {
             case Some(m) => jsonMap = m.asInstanceOf[Map[String, String]]
             case None => logger.error("unable to find the model reader class name")
           }
           modelReaderName = jsonMap(MODEL_READER_NAME)
         }
-        //ignore the other files. They are used in the Model Reader operation
+        //ignore the other files.
         entry = zipInputStream.getNextEntry
       }
 
+      val classFile = new File(tempDirectory.toString)
+      urls = urls :+ classFile.toURL()
       val classLoader = new URLClassLoader(urls, parentClassLoader)
       val modelReader = classLoader.loadClass(modelReaderName).newInstance()
       addToJavaLibraryPath(libraryPaths) //Add temporary directory to java.library.path
-      modelReader.asInstanceOf[ModelReader].read(modelArchiveInput)
+      modelReader.asInstanceOf[ModelReader].read(modelArchiveInput, classLoader, jsonMap)
     }
     finally {
       IOUtils.closeQuietly(zipInputStream)

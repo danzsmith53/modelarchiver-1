@@ -30,12 +30,12 @@ trait ModelReader {
    * Called for loading a Model from a file
    *
    */
-  def read(modelZipFileInput: File ): Model
+  def read(modelZipFileInput: File, classLoader: URLClassLoader, jsonMap: Map[String, String]): Model
 
   /**
    * Called for loading a Model from a ZipInputStream
    *
    */
-  def read(modelZipStreamInput: ZipInputStream): Model
+  def read(modelZipStreamInput: ZipInputStream, classLoader: URLClassLoader, jsonMap: Map[String, String]): Model
 
 }

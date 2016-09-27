@@ -12,7 +12,18 @@
     <artifactId>ModelArchiver</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+         
+    <properties>
+        <commons-lang3.version>3.3.2</commons-lang3.version>
+    </properties>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>tap-snapshots-private</id>
+            <url>https://tap.jfrog.io/tap/private</url>
+        </snapshotRepository>
+    </distributionManagement>
+         
     <repositories>
         <repository>
             <id>central</id>
@@ -70,13 +81,6 @@
             <module>scoring-interfaces</module>
             <module>model-archive-format</module>
      </modules>
-
-    <properties>
-        <project.version>master-SNAPSHOT</project.version>
-
-        <commons-lang3.version>3.3.2</commons-lang3.version>
-
-    </properties>
 <build>
 
     <plugins>

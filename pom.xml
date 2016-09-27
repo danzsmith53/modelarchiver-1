@@ -3,23 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
-    <groupId>org.trustedanalytics</groupId>
+    <parent>
+        <groupId>org.trustedanalytics</groupId>
+        <artifactId>tap-root</artifactId>
+        <version>0.1.1</version>
+    </parent>
+
     <artifactId>ModelArchiver</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <repositories>
-        <repository>
-            <id>scoring</id>
-            <url>https://maven.trustedanalytics.org/content/repositories/public/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
         <repository>
             <id>central</id>
             <url>http://repo1.maven.org/maven2</url>
@@ -27,7 +21,27 @@
                 <enabled>true</enabled>
             </releases>
         </repository>
-
+        <repository>
+            <id>tap</id>
+            <url>https://tap.jfrog.io/tap/public</url>
+            <snapshots>
+                <enabled>false</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>tap-snapshots</id>
+            <url>https://tap.jfrog.io/tap/public-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
         <repository>
             <id>apache</id>
             <url>https://repository.apache.org/content/groups/public/</url>
@@ -56,26 +70,12 @@
             <module>scoring-interfaces</module>
             <module>model-archive-format</module>
      </modules>
+
     <properties>
         <project.version>master-SNAPSHOT</project.version>
-        <top.dir>${project.basedir}</top.dir>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dep.typesafe-config.version>1.2.1</dep.typesafe-config.version>
-        <!--START GAO MAVEN -->
-
-        <scala.long.version>2.10.4</scala.long.version>
-        <scala.short.version>2.10</scala.short.version>
-        <scalatest.version>2.1.6</scalatest.version>
-
-        <akka.version>2.3.11</akka.version>
-
-        <scoverage-plugin.version>1.0.4</scoverage-plugin.version>
-
-
 
         <commons-lang3.version>3.3.2</commons-lang3.version>
-        <mavenVersion>3.1.1</mavenVersion>
-        <javaVersion>1.8</javaVersion>
+
     </properties>
 <build>
 
@@ -114,7 +114,7 @@
             <configuration>
                 <recompileMode>incremental</recompileMode>
                 <useZincServer>true</useZincServer>
-                <scalaVersion>${scala.long.version}</scalaVersion>
+                <scalaVersion>${tap.scala.long.version}</scalaVersion>
                 <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
             </configuration>
         </plugin>
@@ -143,21 +143,13 @@
             </executions>
         </plugin>
         <!--END DO NOT TOUCH-->
-    <plugin>
-        <groupId>org.trustedanalytics</groupId>
-        <artifactId>atk-maven-plugin</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <executions>
-            <execution>
-                <id>compile</id>
-                <goals>
-                    <goal>generate-conf</goal>
-                </goals>
-            </execution>
-        </executions>
-    </plugin>
-
-
+        <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <configuration>
+                <header>license-header.txt</header>
+            </configuration>
+        </plugin>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
@@ -183,8 +175,8 @@
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.short.version}</artifactId>
-            <version>${scalatest.version}</version>
+            <artifactId>scalatest_${tap.scala.short.version}</artifactId>
+            <version>${tap.scalatest.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -195,7 +187,7 @@
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
-            <version>1.2.1</version>
+            <version>${tap.typesafe-config.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -205,7 +197,7 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>${scala.long.version}</version>
+            <version>${tap.scala.long.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -215,14 +207,14 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
-            <version>${scala.long.version}</version>
+            <version>${tap.scala.long.version}</version>
         </dependency>
     </dependencies>
     </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.short.version}</artifactId>
+            <artifactId>scalatest_${tap.scala.short.version}</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -51,8 +51,17 @@ object ModelArchiveFormat {
     try {
       dependencyFiles.foreach((file: File) => {
         if (file.exists()) {
-          addFileToZip(zipFile, file)
+          if (file.isDirectory) {
+            println(s"Adding dir $file")
+            addDirToZip(zipFile, file.toString)
+          }
+          else {
+            println(s"Adding file $file")
+            addFileToZip(zipFile, file)
+          }
         }
+        else
+          println(s" file does not exist: $file")
       })
       val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\", \"" + MODEL_NAME + "\": \"" + modelClassName + "\"}"
       addByteArrayToZip(zipFile, DESCRIPTOR_FILENAME, descriptorJson.length, descriptorJson.getBytes("utf-8"))
@@ -73,7 +82,7 @@ object ModelArchiveFormat {
    * @return the instantiated Model   
    */
   def read(modelArchiveInput: File, parentClassLoader: ClassLoader, bufSize: Option[Int]): Model = {
-    logger.info("Entered ead function in Model Archive Format")
+    logger.info("Entered read function in Model Archive Format")
     var zipInputStream: ZipInputStream = null
     var modelReaderName: String = null
     var urls = Array.empty[URL]
@@ -188,6 +197,36 @@ object ModelArchiveFormat {
     try {
       zipFile.putNextEntry(fileEntry)
       IOUtils.copy(new FileInputStream(file), zipFile)
+    }
+  }
+
+  def addDirToZip(zipFile: ZipOutputStream, dir: String): Unit = {
+    try {
+      val zipDir = new File(dir)
+      //get a listing of the directory content
+      val dirList = zipDir.list
+      val readBuffer = new Array[Byte](BUFFER_SIZE)
+      var bytesIn = 0
+
+      //loop through dirList, and zip the files
+      dirList.foreach((fileStr: String) => {
+        val file = new File(zipDir, fileStr)
+        if (file.isDirectory) {
+          addDirToZip(zipFile, file.getPath)
+        }
+        else {
+          val fileInputStream = new FileInputStream(file)
+          val fileEntry = new ZipEntry(file.getPath)
+          zipFile.putNextEntry(fileEntry)
+          //now write the content of the file to the ZipOutputStream
+          var read = fileInputStream.read(readBuffer)
+          while (read != -1) {
+            zipFile.write(readBuffer, 0, read)
+            read = fileInputStream.read(readBuffer)
+          }
+          fileInputStream.close()
+        }
+      })
     }
   }
 

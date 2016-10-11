@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils
  * @param modelReader Reader class for the Model. Used to read the model from Model Archive Format
  * @param customMetaData Map for providing any other customized information about the model such as creation date etc.
  */
-case class ModelMetaDataArgs(modelType: String, modelClass: String, modelReader: String, customMetaData: Map[String, String]) {
+case class ModelMetaData(modelType: String, modelClass: String, modelReader: String, customMetaData: Map[String, String]) {
   require(StringUtils.isNotEmpty(modelType), "published model type should not be empty")
   require(StringUtils.isNotEmpty(modelClass), "published model classs should not be empty")
   require(StringUtils.isNotEmpty(modelReader), "published model reader should not be empty")

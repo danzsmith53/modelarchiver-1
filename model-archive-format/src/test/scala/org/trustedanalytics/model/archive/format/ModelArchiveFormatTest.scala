@@ -21,7 +21,7 @@ import java.util.zip.{ ZipOutputStream, ZipInputStream }
 import org.scalatest.WordSpec
 import org.apache.commons.io.{ FileUtils, IOUtils }
 import org.scalatest.Assertions._
-import org.trustedanalytics.scoring.interfaces.{Field, ModelMetaDataArgs, Model, ModelReader}
+import org.trustedanalytics.scoring.interfaces.{Field, ModelMetaData, Model, ModelReader}
 
 import scala.util.parsing.json.JSON
 
@@ -154,8 +154,8 @@ class TestModel() extends Model {
     output
   }
 
-  override def modelMetadata(): ModelMetaDataArgs = {
-    new ModelMetaDataArgs("Dummy Model", "dummy class", "dummy reader", Map("created_on" -> "Jan 29th 2016"))
+  override def modelMetadata(): ModelMetaData = {
+    new ModelMetaData("Dummy Model", "dummy class", "dummy reader", Map("created_on" -> "Jan 29th 2016"))
   }
 }
 

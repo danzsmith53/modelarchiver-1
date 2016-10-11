@@ -29,6 +29,6 @@ trait Model {
 
   def output(): Array[Field]
 
-  def modelMetadata(): ModelMetaDataArgs
+  def modelMetadata(): ModelMetaData
 }
 

@@ -6,10 +6,10 @@
     <parent>
         <groupId>org.trustedanalytics</groupId>
         <artifactId>tap-root</artifactId>
-        <version>0.1.1</version>
+        <version>0.1.2</version>
     </parent>
 
-    <artifactId>ModelArchiver</artifactId>
+    <artifactId>model-archive</artifactId>
     <version>1.0-SNAPSHOT</version>
     <licenses>
         <license>
@@ -18,18 +18,22 @@
         </license>
     </licenses>
     <packaging>pom</packaging>
-         
+
     <properties>
-        <commons-lang3.version>3.3.2</commons-lang3.version>
+
     </properties>
 
     <distributionManagement>
+        <repository>
+            <id>tap</id>
+            <url>https://tap.jfrog.io/tap/public</url>
+        </repository>
         <snapshotRepository>
             <id>tap-snapshots-private</id>
             <url>https://tap.jfrog.io/tap/private</url>
         </snapshotRepository>
     </distributionManagement>
-         
+    
     <repositories>
         <repository>
             <id>central</id>
@@ -84,9 +88,10 @@
     </repositories>
 
      <modules>
-            <module>scoring-interfaces</module>
+            <module>model-archive-interfaces</module>
             <module>model-archive-format</module>
      </modules>
+
 <build>
 
     <plugins>
@@ -154,6 +159,25 @@
         </plugin>
         <!--END DO NOT TOUCH-->
         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <version>1.9</version>
+            <configuration>
+                <excludedScopes>provided,test,system</excludedScopes>
+                <includeTransitiveDependencies>false</includeTransitiveDependencies>
+                <includedScopes>compile</includedScopes>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>download-licenses</id>
+                    <goals>
+                        <goal>download-licenses</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin</artifactId>
             <configuration>
@@ -163,6 +187,7 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
+            <version>2.1.2</version>
             <executions>
                 <execution>
                     <id>attach-sources</id>
@@ -180,7 +205,7 @@
 
         <dependency>
             <groupId>org.trustedanalytics</groupId>
-            <artifactId>scoring-interfaces</artifactId>
+            <artifactId>model-archive-interfaces</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -212,7 +237,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
+            <version>${tap.commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

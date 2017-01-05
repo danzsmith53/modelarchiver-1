@@ -37,6 +37,8 @@ object ModelArchiveFormat {
   val BUFFER_SIZE = 4096
   val MODEL_READER_NAME = "modelLoaderClassName"
   val MODEL_NAME = "modelClassName"
+  val MODEL_TYPE = "modelType"
+  val FRAMEWORK = "scala"
 
   /**
    * Write model using Model Archive Format.
@@ -63,7 +65,7 @@ object ModelArchiveFormat {
         else
           println(s" file does not exist: $file")
       })
-      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\", \"" + MODEL_NAME + "\": \"" + modelClassName + "\"}"
+      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReaderClassName + "\", \"" + MODEL_NAME + "\": \"" + modelClassName + "\", \"" + MODEL_TYPE + "\": \"" + FRAMEWORK + "\"}"
       addByteArrayToZip(zipFile, DESCRIPTOR_FILENAME, descriptorJson.length, descriptorJson.getBytes("utf-8"))
     }
     finally {

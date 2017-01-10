@@ -42,11 +42,11 @@ class ModelArchiveFormatTest extends WordSpec {
       val MODEL_NAME = "modelClassName"
       val model = "testModel"
       val framework = "scala"
-      val MODEL_TYPE = "modelType"
+      val MAR_FRAMEWORK = "marFramework"
 
 
       var jsonMap: Map[String, String] = null
-      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReader + "\", \"" + MODEL_NAME + "\": \"" + model + "\", \"" + MODEL_TYPE + "\": \"" + framework + "\"}"
+      val descriptorJson = "{\"" + MODEL_READER_NAME + "\": \"" + modelReader + "\", \"" + MODEL_NAME + "\": \"" + model + "\", \"" + MAR_FRAMEWORK + "\": \"" + framework + "\"}"
 
 
       var testZipFileStream: ZipInputStream = null
@@ -77,7 +77,7 @@ class ModelArchiveFormatTest extends WordSpec {
             }
             val modelReaderName = jsonMap(MODEL_READER_NAME)
             val modelName = jsonMap(MODEL_NAME)
-            val modelType = jsonMap(MODEL_TYPE)
+            val modelType = jsonMap(MAR_FRAMEWORK)
 
             assert(modelReaderName.equals(modelReader))
             assert(modelName.equals(model))

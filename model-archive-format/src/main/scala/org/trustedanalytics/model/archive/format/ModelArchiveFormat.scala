@@ -37,7 +37,7 @@ object ModelArchiveFormat {
   val BUFFER_SIZE = 4096
   val MODEL_READER_NAME = "modelLoaderClassName"
   val MODEL_NAME = "modelClassName"
-  val MAR_FRAMEWORK = "modelFramework"
+  val MAR_FRAMEWORK = "marFramework"
   val FRAMEWORK = "scala"
 
   /**

@@ -1,4 +1,12 @@
 # model-archive-format
+
+##What's new
+This is the initial release of the `spark-tk-jupyter` repo.
+
+##Known issues
+None.
+
+##Overview
 Model ARchive (MAR) is a format for storing a model along with code that will load it and present it for scoring.
 It makes models portable between applications that do not understand a given model's details or its implementation.
 

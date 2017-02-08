@@ -1,7 +1,7 @@
 # model-archive-format
 
 ##What's new
-This is the initial release of the `spark-tk-jupyter` repo.
+This is the initial release of the `model-archive-format` repo.
 
 ##Known issues
 None.

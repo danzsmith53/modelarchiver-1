@@ -17,7 +17,7 @@ This approach is different than that of PMML/PFA or other techniques that try to
 in a universal language to be interpreted by compatible environments.  As such, MAR has different advantages and
 disadvantages, but provides another option.
 
-The aspect of MAR that enables universal compatibility is the "tapanalyticstoolkit.scoring-interfaces".  Models that
+The aspect of MAR that enables universal compatibility is the "trustedanalytics.scoring-interfaces".  Models that
 implement this interface can use MAR.  It is a very simple API that defines a "score" method along with a
 few other methods that describe the inputs and outputs of that score method, for the given model:
 
@@ -36,14 +36,14 @@ components and (2) the t-squared index (a floating point number).  It is implied
 first elements returned.  So, in this case, the PCA score method returns an array of 3 elements: the one floating point
 number input, and then the list, and the other floating point number.
 + The `metadata` method could describe parameters and training information that might be interesting to the client,
-for example, that a PCA Model was trained with mean-center data and whether a 'k' value was provided.  `metadata` is mostly
+for example, that a PCA Model was trained with mean-center data and whether a 'k' value was provided. `metadata` is mostly
 free-form.
 
 These methods allow apps and services to consume an externally trained model.  When dealing with model creation
 frameworks that do *not* use this particular Model interface (that is, most frameworks),  an *adaptor* can be written to
 present these four methods.
 
-The final aspect of MAR is the ModelReader, also from the "tapanalyticstoolkit.scoring-interfaces".  This reader has the
+The final aspect of MAR is the ModelReader, also from the "trustedanalytics.scoring-interfaces".  This reader has the
 responsibility of loading a model into memory from a MAR zip file.  The MAR zip file must contain all the code
 dependencies require to load the model and execute the methods described above.
 

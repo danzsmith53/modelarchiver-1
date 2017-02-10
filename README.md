@@ -1,12 +1,12 @@
 # model-archive-format
 
-##What's new
+## What's new
 This is the initial release of the `model-archive-format` repo.
 
-##Known issues
+## Known issues
 None.
 
-##Overview
+## Overview
 Model ARchive (MAR) is a format for storing a model along with code that will load it and present it for scoring.
 It makes models portable between applications that do not understand a given model's details or its implementation.
 
@@ -61,9 +61,9 @@ to be a self-contained artifact and makes it easy to port it to other applicatio
 + Serialized Model Bytes – the byte representation of the actual model (forms, encodings, etc., are *not* mandated)
 + Model Code
    * The class that defines the model, which implements the 'Model' trait from the scoring interfaces.  See the
-     [scoring.interfaces.Model](https://github.com/trustedanalytics/ModelArchiver/blob/master/model-archive-interfaces/src/main/scala/org/trustedanalytics/scoring/interfaces/Model.scala)
+     [scoring.interfaces.Model](https://github.com/tapanalyticstoolkit/ModelArchiver/blob/master/model-archive-interfaces/src/main/scala/org/trustedanalytics/scoring/interfaces/Model.scala)
    * The class that implements the 'ModelReader' trait from the scoring interfaces. The reader can use any
-     dependencies in the .mar file to load the Model.  See the [scoring.interfaces.ModelReader](https://github.com/trustedanalytics/ModelArchiver/blob/master/model-archive-interfaces/src/main/scala/org/trustedanalytics/scoring/interfaces/ModelReader.scala)
+     dependencies in the .mar file to load the Model.  See the [scoring.interfaces.ModelReader](https://github.com/tapanalyticstoolkit/ModelArchiver/blob/master/model-archive-interfaces/src/main/scala/org/trustedanalytics/scoring/interfaces/ModelReader.scala)
    * Code Dependencies
 + Other Artifacts – there are *no* restrictions regarding what else can be put inside a MAR file
 

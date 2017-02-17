@@ -7,7 +7,7 @@ This is the initial release of the `model-archive-format` repo.
 None.
 
 ## Overview
-Model ARchive (MAR) is a format for storing a model along with code that will load it and present it for scoring.
+Model ARchive (MAR) is a format for storing a model, along with code that will load it and present it, for scoring.
 It makes models portable between applications that do not understand a given model's details or its implementation.
 
 This allows models from different modeling tools and having varied APIs to be enclosed inside a common wrapper and

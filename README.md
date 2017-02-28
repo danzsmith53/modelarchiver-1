@@ -1,7 +1,7 @@
-# model-archive-format
+# modelarchiver
 
 ## What's new
-This is the initial release of the `model-archive-format` repo.
+This is the initial release of the `modelarchiver` repo.
 
 ## Known issues
 None.
